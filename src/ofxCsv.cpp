@@ -47,14 +47,105 @@ namespace wng {
 	 * A Constructor, usually called to initialize and start the class.
 	 */
 	ofxCsv::ofxCsv(){
-		
+		filePath = "";
 		// set the default seperator value
 		fileSeparator = ",";
+    fileComments = "#";
 		numRows = 0;
+    numCols = 0;
 	}
 
 
-	
+  void ofxCsv::ParseCSV(ifstream& csvSource, vector<vector<string> >& lines)
+  {
+    bool inQuote(false);
+    bool newLine(false);
+    string field;
+    lines.clear();
+    vector<string> line;
+
+    csvSource.seekg (0, csvSource.beg);
+    
+    //std::istream_iterator<char> eos;
+    //std::istream_iterator<char> aChar(csvSource);
+
+    char aChar;
+    while (csvSource.get(aChar))
+    {
+      switch (aChar)
+      {
+        case '"':
+          newLine = false;
+          inQuote = !inQuote;
+          break;
+          
+        case ',':
+          newLine = false;
+          if (inQuote == true)
+          {
+            field += aChar;
+          }
+          else
+          {
+            line.push_back(field);
+            field.clear();
+          }
+          break;
+          
+        case '\n':
+        case '\r':
+          if (inQuote == true)
+          {
+            field += aChar;
+          }
+          else
+          {
+            if (newLine == false)
+            {
+              line.push_back(field);
+              lines.push_back(line);
+              ofLog(OF_LOG_VERBOSE, "Parsed %i fields", line.size());
+
+              field.clear();
+              line.clear();
+              newLine = true;
+            }
+          }
+          break;
+          
+        default:
+          newLine = false;
+          field += aChar;
+          break;
+      }
+      
+      aChar++;
+    }
+    
+    if (field.size())
+      line.push_back(field);
+    
+    if (line.size())
+      lines.push_back(line);
+    
+    ofLog(OF_LOG_VERBOSE, "Parsed %i rows", lines.size());
+    
+    for (int r=0; r < lines.size(); r++) {
+      ofLog(OF_LOG_VERBOSE, "Line %i", r);
+      stringstream message;
+      message << "ROW " << ofToString(r) << ":\t";
+      for(int l=0; l < lines[r].size(); l++) {
+        string field = lines[r][l];
+        message << " Field "<< ofToString(l) << " [" << field << "]";
+      }
+      ofLog(OF_LOG_VERBOSE, message.str() );
+    }
+
+    // Save the Number of Rows & Cols.
+    numRows = data.size();
+    numCols = numRows > 0 ? data[0].size() : 0;
+
+  }
 	
 	
 	/**
@@ -68,11 +159,17 @@ namespace wng {
 	 *        Set the Comments sign.
 	 */
 	void ofxCsv::loadFile(string path, string separator, string comments){
-		
+    #ifdef OFXCSV_LOG
+        ofLog() << "[ofxCsv] loadFile";
+        ofLog() << "         filePath: " << filePath;
+        ofLog() << "         fileSeparator: " << fileSeparator;
+        ofLog() << "         fileComments: " << fileComments;
+    #endif
+    
 		// Save Filepath, Separator and Comments to variables.
-		filePath = path;
-		fileSeparator = separator;
-		fileComments = comments;
+		this->filePath = path;
+		this->fileSeparator = separator;
+		this->fileComments = comments;
 		#ifdef OFXCSV_LOG
 			ofLog() << "[ofxCsv] loadFile";
 			ofLog() << "         filePath: " << filePath;
@@ -81,54 +178,18 @@ namespace wng {
 		#endif
 		
 		// Declare a File Stream.
-		ifstream fileIn;
+    ifstream fileIn;
 	
 		// Open your text File:
 		fileIn.open(path.c_str());
 	
 		// Check if File is open.
 		if(fileIn.is_open()) {
-			int lineCount = 0;
-			vector<string> rows;
+
+      ParseCSV(fileIn, data);
 		
-			while(fileIn != NULL) {
-				string temp;		
-				getline(fileIn, temp);
-			
-				// Skip empty lines.
-				if(temp.length() == 0) {
-					//cout << "Skip empty line no: " << lineCount << endl;
-				}
-				// Skip Comment lines.
-				else if(ofToString(temp[0]) == comments) {
-					//cout << "Skip Comment line no: " << lineCount << endl;
-				} else {
-					rows.push_back(temp);
-				
-					// Split row into cols.
-				// formerly was: vector<string> cols = ofSplitString(rows[lineCount], ",");
-					vector<string> cols = ofSplitString(rows[lineCount], separator);
-				
-					// Write the string to data.
-					data.push_back(cols);
-				
-					// Erase remaining elements.
-					cols.erase(cols.begin(), cols.end());
-					//cout << "cols: After erasing all elements, vector integers " << (cols.empty() ? "is" : "is not" ) << " empty" << endl;
-				
-					lineCount++;
-				}
-			}
-		
-			// Save the Number of Rows.
-			numRows = rows.size();
-		
-			// Erase remaining elements.
-			rows.erase(rows.begin(), rows.end());
-			//cout << "rows: After erasing all elements, vector integers " << (rows.empty() ? "is" : "is not" ) << " empty" << endl;
-		
-			// If File cannot opening, print a message to console.
 		} else {
+      // If File cannot opening, print a message to console.
 			cerr << "[ofxCsv] Error opening " << path << ".\n";
 		}
 	
@@ -382,7 +443,6 @@ namespace wng {
 	string ofxCsv::getString(int row, int col){
 		allocateData(row, col);
 		return data[row][col];
-	
 	}
 	
 	

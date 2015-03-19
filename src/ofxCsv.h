@@ -100,6 +100,7 @@ namespace wng {
 											// that follow the last non-empty row are not included.
     private:
         void allocateData( int row, int col);
+    void ParseCSV(ifstream& csvSource, vector<vector<string> >& lines);
 	};
 
 };
