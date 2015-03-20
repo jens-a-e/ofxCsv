@@ -9,3 +9,4 @@
 # ignore Xcode User .pbxuser and .mode1v3 files.
 *.pbxuser
 *.mode1v3
+ofxCsv_example/ofxCsv_example.xcodeproj/xcuserdata
