@@ -55,8 +55,12 @@ namespace wng {
     numCols = 0;
 	}
 
+  void ofxCsv::ParseCSV(ifstream& csvSource, vector<vector<string> >& lines) {
+    csvSource.seekg (0, csvSource.beg);
+    ParseCSVString(csvSource, lines);
+  }
 
-  void ofxCsv::ParseCSV(ifstream& csvSource, vector<vector<string> >& lines)
+  void ofxCsv::ParseCSVString(istream& csvSource, vector<vector<string> >& lines)
   {
     bool inQuote(false);
     bool newLine(false);
@@ -64,8 +68,6 @@ namespace wng {
     lines.clear();
     vector<string> line;
 
-    csvSource.seekg (0, csvSource.beg);
-    
     //std::istream_iterator<char> eos;
     //std::istream_iterator<char> aChar(csvSource);
 

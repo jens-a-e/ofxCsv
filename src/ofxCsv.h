@@ -98,9 +98,11 @@ namespace wng {
 			int	numRows;				    // The number of data rows.
 			int	numCols;				    // Also, empty lines containing only whitespace characters
 											// that follow the last non-empty row are not included.
+    void ParseCSV(ifstream& csvSource, vector<vector<string> >& lines);
+    void ParseCSVString(istream& csvSource, vector<vector<string> >& lines);
+
     private:
         void allocateData( int row, int col);
-    void ParseCSV(ifstream& csvSource, vector<vector<string> >& lines);
 	};
 
 };
